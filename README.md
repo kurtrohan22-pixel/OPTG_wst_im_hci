@@ -69,7 +69,15 @@ Uploaded profile pictures use Laravel's public filesystem by default. On an ephe
 
 ## Deployment
 
-Deploy the Laravel application to a PHP-capable host such as Render or Railway and connect it to the Supabase project using the environment variables above. Configure the service to serve Laravel's `public` directory, install Composer and npm dependencies, run `npm run build`, then run migrations. Set a persistent Laravel `APP_KEY`, `APP_URL`, `APP_ENV=production`, and `APP_DEBUG=false`. Configure persistent/object storage for profile images as described above.
+This repository includes a Vercel serverless entry point (`api/index.php`) and [`vercel.json`](./vercel.json). Vercel uses the community PHP runtime (`vercel-php@0.9.0`, PHP 8.5), Composer for Laravel dependencies, and `npm run build` to produce the static assets in `public`.
+
+1. Import `kurtrohan22-pixel/OPTG_wst_im_hci` from the Vercel dashboard.
+2. Keep the Root Directory at the repository root; use the checked-in build command `npm run build` and output directory `public`.
+3. Add the variables from the Supabase section to Vercel **Project → Settings → Environment Variables**, including a fresh, persistent `APP_KEY`, `APP_URL` (the assigned `https://...vercel.app` URL), `APP_ENV=production`, and `APP_DEBUG=false`. Set `SESSION_DRIVER=cookie`, `CACHE_STORE=array`, `QUEUE_CONNECTION=sync`, `LOG_CHANNEL=stderr`, and `VIEW_COMPILED_PATH=/tmp` for the serverless runtime.
+4. Run `php artisan migrate --force` against Supabase after the environment variables are set. Use a deployment/build command that has the same PostgreSQL connection variables; do not put credentials in `vercel.json` or GitHub.
+5. Test registration, login, portfolio CRUD, public previews, and profile image uploads on the deployed URL.
+
+Vercel's function filesystem is ephemeral. Profile pictures currently use Laravel's public local disk, so production image uploads need durable object storage (for example, a public Supabase Storage bucket configured through Laravel's S3 filesystem) before relying on them. The application must also be deployed with a persistent `APP_KEY` so encrypted cookies remain valid across requests.
 
 The public share URL for a portfolio is generated from the configured `APP_URL`, for example `https://your-public-domain.example/p/{uuid}`. A real public deployment URL requires a hosting account, a configured domain/service, and Supabase connection credentials; these are intentionally not included in the source tree.
 
